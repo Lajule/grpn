@@ -25,30 +25,56 @@ func main() {
 
 	s.Clear()
 
-	quit := make(chan struct{})
+	runes := []rune{}
+	for {
+		w, h := s.Size()
+		ev := s.PollEvent()
 
-	go func() {
-		for {
-			ev := s.PollEvent()
+		switch ev := ev.(type) {
+		case *tcell.EventKey:
+			switch ev.Key() {
+			case tcell.KeyRune:
+				runes = append([]rune{ev.Rune()}, runes...)
 
-			switch ev := ev.(type) {
-			case *tcell.EventKey:
-				switch ev.Key() {
-				case tcell.KeyEscape, tcell.KeyEnter:
-					close(quit)
-					return
-
-				case tcell.KeyCtrlL:
-					s.Sync()
+				for i, r := range runes {
+					s.SetContent(w - 1 - i, h - 1, r, nil, tcell.StyleDefault)
 				}
 
-			case *tcell.EventResize:
+				s.Show()
+
+			case tcell.KeyBackspace2:
+				if len(runes) > 0 {
+					s.SetContent(w - len(runes), h - 1, 0, nil, tcell.StyleDefault)
+
+					runes = runes[1:]
+
+					for i, r := range runes {
+						s.SetContent(w - 1 - i, h - 1, r, nil, tcell.StyleDefault)
+					}
+
+					s.Show()
+				}
+
+			case tcell.KeyEnter:
+				for i, _ := range runes {
+					s.SetContent(w - 1 - i, h - 1, 0, nil, tcell.StyleDefault)
+				}
+
+				runes = runes[:0]
+
+				s.Show()
+
+			case tcell.KeyEscape:
+				s.Fini()
+
+				os.Exit(0)
+
+			case tcell.KeyCtrlL:
 				s.Sync()
 			}
+
+		case *tcell.EventResize:
+			s.Sync()
 		}
-	}()
-
-	<-quit
-
-	s.Fini()
+	}
 }
