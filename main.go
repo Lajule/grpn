@@ -25,6 +25,7 @@ func main() {
 
 	s.Clear()
 
+	stack := []string{}
 	runes := []rune{}
 	for {
 		w, h := s.Size()
@@ -56,13 +57,21 @@ func main() {
 				}
 
 			case tcell.KeyEnter:
-				for i, _ := range runes {
-					s.SetContent(w - 1 - i, h - 1, 0, nil, tcell.StyleDefault)
+				if len(runes) > 0 {
+					stack = append([]string{string(runes)}, stack...)
+
+					runes = runes[:0]
+
+					s.Clear()
+
+					for l, str := range stack {
+						for i, r := range []rune(str) {
+							s.SetContent(w - 1 - i, h - 2 - l, r, nil, tcell.StyleDefault)
+						}
+					}
+
+					s.Show()
 				}
-
-				runes = runes[:0]
-
-				s.Show()
 
 			case tcell.KeyEscape:
 				s.Fini()
