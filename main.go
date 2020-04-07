@@ -7,32 +7,51 @@ import (
 	"github.com/gdamore/tcell"
 )
 
-func main() {
+var sc tcell.Screen
 
+func setInputContent(input []rune, w, h int) {
+	for i, r := range input {
+		sc.SetContent(w-1-i, h-1, r, nil, tcell.StyleDefault)
+	}
+}
+
+func setStackContent(stack []string, w, h int) {
+	for l, str := range stack {
+		for i, r := range []rune(str) {
+			sc.SetContent(w-1-i, h-2-l, r, nil, tcell.StyleDefault)
+		}
+	}
+}
+
+func init() {
 	tcell.SetEncodingFallback(tcell.EncodingFallbackASCII)
 
-	s, e := tcell.NewScreen()
+	var err error
 
-	if e != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", e)
+	sc, err = tcell.NewScreen()
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
 	}
 
-	if e = s.Init(); e != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", e)
+	if err = sc.Init(); err != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
 	}
 
-	s.Clear()
+	sc.Clear()
+}
 
+func main() {
 	stack := []string{}
 
-	runes := []rune{}
+	input := []rune{}
 
 	for {
-		w, h := s.Size()
+		w, h := sc.Size()
 
-		ev := s.PollEvent()
+		ev := sc.PollEvent()
 
 		switch ev := ev.(type) {
 		case *tcell.EventKey:
@@ -40,86 +59,102 @@ func main() {
 			case tcell.KeyRune:
 				switch ev.Rune() {
 				case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.':
-					runes = append([]rune{ev.Rune()}, runes...)
+					input = append([]rune{ev.Rune()}, input...)
 
-					for i, r := range runes {
-						s.SetContent(w - 1 - i, h - 1, r, nil, tcell.StyleDefault)
-					}
+					setInputContent(input, w, h)
 
-					s.Show()
+					sc.Show()
 				}
 
+			case '+', '-', '*', '/':
+				sc.Sync()
+
 			case tcell.KeyBackspace2:
-				if len(runes) > 0 {
-					s.SetContent(w - len(runes), h - 1, 0, nil, tcell.StyleDefault)
+				if len(input) > 0 {
+					sc.SetContent(w-len(input), h-1, 0, nil, tcell.StyleDefault)
 
-					runes = runes[1:]
+					input = input[1:]
 
-					for i, r := range runes {
-						s.SetContent(w - 1 - i, h - 1, r, nil, tcell.StyleDefault)
-					}
+					setInputContent(input, w, h)
 
-					s.Show()
+					sc.Show()
 				}
 
 			case tcell.KeyEnter:
-				if len(runes) > 0 {
-					stack = append([]string{string(runes)}, stack...)
+				if len(input) > 0 {
+					stack = append([]string{string(input)}, stack...)
 
-					runes = runes[:0]
+					input = input[:0]
 
-					s.Clear()
+					sc.Clear()
 
-					for l, str := range stack {
-						for i, r := range []rune(str) {
-							s.SetContent(w - 1 - i, h - 2 - l, r, nil, tcell.StyleDefault)
-						}
-					}
+					setStackContent(stack, w, h)
 
-					s.Show()
+					sc.Show()
 				}
 
 			case tcell.KeyCtrlD:
 				if len(stack) > 0 {
 					stack = stack[1:]
 
-					s.Clear()
+					sc.Clear()
 
-					for l, str := range stack {
-						for i, r := range []rune(str) {
-							s.SetContent(w - 1 - i, h - 2 - l, r, nil, tcell.StyleDefault)
-						}
-					}
+					setStackContent(stack, w, h)
+					setInputContent(input, w, h)
 
-					s.Show()
+					sc.Show()
 				}
 
 			case tcell.KeyCtrlU:
 				if len(stack) > 0 {
 					stack = append([]string{stack[0]}, stack...)
 
-					s.Clear()
+					sc.Clear()
 
-					for l, str := range stack {
-						for i, r := range []rune(str) {
-							s.SetContent(w - 1 - i, h - 2 - l, r, nil, tcell.StyleDefault)
-						}
-					}
+					setStackContent(stack, w, h)
+					setInputContent(input, w, h)
 
-					s.Show()
+					sc.Show()
+				}
+
+			case tcell.KeyCtrlS:
+				if len(stack) > 1 {
+					tmp := stack[0]
+					stack[0] = stack[1]
+					stack[1] = tmp
+
+					sc.Clear()
+
+					setStackContent(stack, w, h)
+					setInputContent(input, w, h)
+
+					sc.Show()
+				}
+
+			case tcell.KeyCtrlR:
+				if len(stack) > 1 {
+					tmp := stack[0]
+					stack = append(stack[1:len(stack)], tmp)
+
+					sc.Clear()
+
+					setStackContent(stack, w, h)
+					setInputContent(input, w, h)
+
+					sc.Show()
 				}
 
 			case tcell.KeyCtrlL:
-				s.Sync()
+				sc.Sync()
 
 			case tcell.KeyEscape:
-				s.Fini()
+				sc.Fini()
 
 				os.Exit(0)
 			}
 
 		case *tcell.EventResize:
-			s.Sync()
+			sc.Sync()
 		}
 	}
 }
