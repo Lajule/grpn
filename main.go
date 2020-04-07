@@ -3,11 +3,22 @@ package main
 import (
 	"fmt"
 	"os"
+	"strconv"
 
 	"github.com/gdamore/tcell"
 )
 
 var sc tcell.Screen
+
+func reverse(s string) string {
+	runes := []rune{}
+
+	for _, r := range s {
+		runes = append([]rune{r}, runes...)
+	}
+
+	return string(runes)
+}
 
 func setInputContent(input []rune, w, h int) {
 	for i, r := range input {
@@ -64,12 +75,25 @@ func main() {
 					setInputContent(input, w, h)
 
 					sc.Show()
+
+				case '+', '-', '*', '/':
+					if len(input) > 0 && len(stack) > 0 {
+						lhs, _ := strconv.ParseFloat(reverse(string(input)), 32)
+						rhs, _ := strconv.ParseFloat(reverse(stack[0]), 32)
+
+						stack[0] = reverse(fmt.Sprintf("%v", lhs+rhs))
+
+						input = input[:0]
+
+						sc.Clear()
+
+						setStackContent(stack, w, h)
+
+						sc.Show()
+					}
 				}
 
-			case '+', '-', '*', '/':
-				sc.Sync()
-
-			case tcell.KeyBackspace2:
+			case tcell.KeyBackspace, tcell.KeyBackspace2:
 				if len(input) > 0 {
 					sc.SetContent(w-len(input), h-1, 0, nil, tcell.StyleDefault)
 
