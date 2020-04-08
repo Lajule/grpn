@@ -75,10 +75,19 @@ func main() {
 					setInputContent(input, w, h)
 					sc.Show()
 
-				case '+':
+				case '+', '-', '*', '/':
 					if len(input) > 0 && len(stack) > 0 {
 						if n, err := strconv.ParseFloat(reverse(string(input)), 32); err == nil {
-							stack[0] += n
+							switch ev.Rune() {
+							case '+':
+								stack[0] += n
+							case '-':
+								stack[0] -= n
+							case '*':
+								stack[0] *= n
+							case '/':
+								stack[0] /= n
+							}
 
 							input = input[:0]
 
@@ -86,7 +95,72 @@ func main() {
 							setStackContent(stack, w, h)
 							sc.Show()
 						}
+					} else if len(stack) > 1 {
+						rhs, lhs := stack[0], stack[1]
+						stack = stack[2:]
+
+						switch ev.Rune() {
+						case '+':
+							stack = append([]float64{lhs + rhs}, stack...)
+						case '-':
+							stack = append([]float64{lhs - rhs}, stack...)
+						case '*':
+							stack = append([]float64{lhs * rhs}, stack...)
+						case '/':
+							stack = append([]float64{lhs / rhs}, stack...)
+						}
+
+						sc.Clear()
+						setStackContent(stack, w, h)
+						sc.Show()
 					}
+				case 'd':
+					if len(stack) > 0 {
+						stack = stack[1:]
+
+						sc.Clear()
+						setStackContent(stack, w, h)
+						setInputContent(input, w, h)
+						sc.Show()
+					}
+
+				case 'u':
+					if len(stack) > 0 {
+						stack = append([]float64{stack[0]}, stack...)
+
+						sc.Clear()
+						setStackContent(stack, w, h)
+						setInputContent(input, w, h)
+						sc.Show()
+					}
+
+				case 's':
+					if len(stack) > 1 {
+						tmp := stack[0]
+						stack[0] = stack[1]
+						stack[1] = tmp
+
+						sc.Clear()
+						setStackContent(stack, w, h)
+						setInputContent(input, w, h)
+						sc.Show()
+					}
+
+				case 'r':
+					if len(stack) > 1 {
+						tmp := stack[0]
+						stack = append(stack[1:len(stack)], tmp)
+
+						sc.Clear()
+						setStackContent(stack, w, h)
+						setInputContent(input, w, h)
+						sc.Show()
+					}
+
+				case 'q':
+					sc.Fini()
+
+					os.Exit(0)
 				}
 
 			case tcell.KeyBackspace, tcell.KeyBackspace2:
@@ -112,56 +186,9 @@ func main() {
 					}
 				}
 
-			case tcell.KeyCtrlD:
-				if len(stack) > 0 {
-					stack = stack[1:]
-
-					sc.Clear()
-					setStackContent(stack, w, h)
-					setInputContent(input, w, h)
-					sc.Show()
-				}
-
-			case tcell.KeyCtrlU:
-				if len(stack) > 0 {
-					stack = append([]float64{stack[0]}, stack...)
-
-					sc.Clear()
-					setStackContent(stack, w, h)
-					setInputContent(input, w, h)
-					sc.Show()
-				}
-
-			case tcell.KeyCtrlS:
-				if len(stack) > 1 {
-					tmp := stack[0]
-					stack[0] = stack[1]
-					stack[1] = tmp
-
-					sc.Clear()
-					setStackContent(stack, w, h)
-					setInputContent(input, w, h)
-					sc.Show()
-				}
-
-			case tcell.KeyCtrlR:
-				if len(stack) > 1 {
-					tmp := stack[0]
-					stack = append(stack[1:len(stack)], tmp)
-
-					sc.Clear()
-					setStackContent(stack, w, h)
-					setInputContent(input, w, h)
-					sc.Show()
-				}
-
 			case tcell.KeyCtrlL:
 				sc.Sync()
 
-			case tcell.KeyEscape:
-				sc.Fini()
-
-				os.Exit(0)
 			}
 
 		case *tcell.EventResize:
