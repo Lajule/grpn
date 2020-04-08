@@ -81,10 +81,13 @@ func main() {
 							switch ev.Rune() {
 							case '+':
 								stack[0] += n
+
 							case '-':
 								stack[0] -= n
+
 							case '*':
 								stack[0] *= n
+
 							case '/':
 								stack[0] /= n
 							}
@@ -102,10 +105,13 @@ func main() {
 						switch ev.Rune() {
 						case '+':
 							stack = append([]float64{lhs + rhs}, stack...)
+
 						case '-':
 							stack = append([]float64{lhs - rhs}, stack...)
+
 						case '*':
 							stack = append([]float64{lhs * rhs}, stack...)
+
 						case '/':
 							stack = append([]float64{lhs / rhs}, stack...)
 						}
@@ -114,9 +120,15 @@ func main() {
 						setStackContent(stack, w, h)
 						sc.Show()
 					}
-				case 'd':
+				case 'd', 'u':
 					if len(stack) > 0 {
-						stack = stack[1:]
+						switch ev.Rune() {
+						case 'd':
+							stack = stack[1:]
+
+						case 'u':
+							stack = append([]float64{stack[0]}, stack...)
+						}
 
 						sc.Clear()
 						setStackContent(stack, w, h)
@@ -124,32 +136,18 @@ func main() {
 						sc.Show()
 					}
 
-				case 'u':
-					if len(stack) > 0 {
-						stack = append([]float64{stack[0]}, stack...)
-
-						sc.Clear()
-						setStackContent(stack, w, h)
-						setInputContent(input, w, h)
-						sc.Show()
-					}
-
-				case 's':
+				case 's', 'r':
 					if len(stack) > 1 {
-						tmp := stack[0]
-						stack[0] = stack[1]
-						stack[1] = tmp
+						switch ev.Rune() {
+						case 's':
+							tmp := stack[0]
+							stack[0] = stack[1]
+							stack[1] = tmp
 
-						sc.Clear()
-						setStackContent(stack, w, h)
-						setInputContent(input, w, h)
-						sc.Show()
-					}
-
-				case 'r':
-					if len(stack) > 1 {
-						tmp := stack[0]
-						stack = append(stack[1:len(stack)], tmp)
+						case 'r':
+							tmp := stack[0]
+							stack = append(stack[1:len(stack)], tmp)
+						}
 
 						sc.Clear()
 						setStackContent(stack, w, h)
