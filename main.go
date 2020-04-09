@@ -11,7 +11,26 @@ import (
 
 var (
 	sc tcell.Screen
+
 	st tcell.Style
+
+	keys = []string{
+		"    +: Add",
+		"    -: Sub",
+		"    *: Mul",
+		"    /: Div",
+		"    p: Pow",
+		"    i: +/-",
+		"    t: Sqrt",
+		"    d: Drop",
+		"    u: Dup",
+		"    s: Swap",
+		"    r: Rot",
+		"    h: help",
+		"Enter: Enter",
+		"Suppr: Sup",
+		"    q: Quit",
+	}
 )
 
 func reverse(s string) string {
@@ -216,13 +235,22 @@ func main() {
 						sc.Show()
 					}
 
+				case 'h':
+					for l, str := range keys {
+						for c, r := range str {
+							sc.SetContent(1+c, h-2-l, r, nil, st)
+						}
+					}
+
+					sc.Show()
+
 				case 'q':
 					sc.Fini()
 
 					os.Exit(0)
 				}
 
-			case tcell.KeyBackspace, tcell.KeyBackspace2:
+			case tcell.KeyDelete:
 				if len(input) > 0 {
 					sc.SetContent(w-len(input), h-1, 0, nil, st)
 
