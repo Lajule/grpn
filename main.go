@@ -8,7 +8,10 @@ import (
 	"github.com/gdamore/tcell"
 )
 
-var sc tcell.Screen
+var (
+	sc tcell.Screen
+	st tcell.Style
+)
 
 func reverse(s string) string {
 	runes := []rune{}
@@ -22,14 +25,14 @@ func reverse(s string) string {
 
 func setInputContent(input []rune, w, h int) {
 	for c, r := range input {
-		sc.SetContent(w-1-c, h-1, r, nil, tcell.StyleDefault)
+		sc.SetContent(w-1-c, h-1, r, nil, st)
 	}
 }
 
 func setStackContent(stack []float64, w, h int) {
 	for l, n := range stack {
 		for c, r := range []rune(reverse(fmt.Sprintf("%v", n))) {
-			sc.SetContent(w-1-c, h-2-l, r, nil, tcell.StyleDefault)
+			sc.SetContent(w-1-c, h-2-l, r, nil, st)
 		}
 	}
 }
@@ -50,6 +53,8 @@ func init() {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
 	}
+
+	st = tcell.StyleDefault
 
 	sc.Clear()
 }
@@ -120,6 +125,29 @@ func main() {
 						setStackContent(stack, w, h)
 						sc.Show()
 					}
+
+				case 'i':
+					if len(input) > 0 {
+						if input[len(input)-1] == '-' {
+							input = input[:len(input)-1]
+
+							sc.SetContent(w-len(input)-1, h-1, 0, nil, st)
+						} else {
+							input = append(input, '-')
+
+							sc.SetContent(w-len(input), h-1, '-', nil, st)
+						}
+
+						sc.Show()
+					} else if len(stack) > 0 {
+						stack[0] *= -1
+
+						sc.Clear()
+						setStackContent(stack, w, h)
+						setInputContent(input, w, h)
+						sc.Show()
+					}
+
 				case 'd', 'u':
 					if len(stack) > 0 {
 						switch ev.Rune() {
@@ -163,7 +191,7 @@ func main() {
 
 			case tcell.KeyBackspace, tcell.KeyBackspace2:
 				if len(input) > 0 {
-					sc.SetContent(w-len(input), h-1, 0, nil, tcell.StyleDefault)
+					sc.SetContent(w-len(input), h-1, 0, nil, st)
 
 					input = input[1:]
 
