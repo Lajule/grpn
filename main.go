@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"os"
 	"strconv"
 
@@ -29,6 +30,12 @@ func setInputContent(input []rune, w, h int) {
 	}
 }
 
+func clearInput(l, w, h int) {
+	for c := 0; c < l; c++ {
+		sc.SetContent(w-1-c, h-1, 0, nil, st)
+	}
+}
+
 func setStackContent(stack []float64, w, h int) {
 	for l, n := range stack {
 		for c, r := range []rune(reverse(fmt.Sprintf("%v", n))) {
@@ -46,11 +53,13 @@ func init() {
 
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
+
 		os.Exit(1)
 	}
 
 	if err = sc.Init(); err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
+
 		os.Exit(1)
 	}
 
@@ -80,7 +89,7 @@ func main() {
 					setInputContent(input, w, h)
 					sc.Show()
 
-				case '+', '-', '*', '/':
+				case '+', '-', '*', '/', 'p':
 					if len(input) > 0 && len(stack) > 0 {
 						if n, err := strconv.ParseFloat(reverse(string(input)), 32); err == nil {
 							switch ev.Rune() {
@@ -95,6 +104,9 @@ func main() {
 
 							case '/':
 								stack[0] /= n
+
+							case 'p':
+								stack[0] = math.Pow(stack[0], n)
 							}
 
 							input = input[:0]
@@ -119,6 +131,9 @@ func main() {
 
 						case '/':
 							stack = append([]float64{lhs / rhs}, stack...)
+
+						case 'p':
+							stack = append([]float64{math.Pow(lhs, rhs)}, stack...)
 						}
 
 						sc.Clear()
@@ -126,21 +141,39 @@ func main() {
 						sc.Show()
 					}
 
-				case 'i':
+				case 'i', 't':
 					if len(input) > 0 {
-						if input[len(input)-1] == '-' {
-							input = input[:len(input)-1]
+						switch ev.Rune() {
+						case 'i':
+							if input[len(input)-1] == '-' {
+								input = input[:len(input)-1]
 
-							sc.SetContent(w-len(input)-1, h-1, 0, nil, st)
-						} else {
-							input = append(input, '-')
+								sc.SetContent(w-len(input)-1, h-1, 0, nil, st)
+							} else {
+								input = append(input, '-')
 
-							sc.SetContent(w-len(input), h-1, '-', nil, st)
+								sc.SetContent(w-len(input), h-1, '-', nil, st)
+							}
+
+						case 't':
+							if n, err := strconv.ParseFloat(reverse(string(input)), 32); err == nil {
+								clearInput(len(input), w, h)
+
+								input = []rune(reverse(fmt.Sprintf("%v", math.Sqrt(n))))
+
+								setInputContent(input, w, h)
+							}
 						}
 
 						sc.Show()
 					} else if len(stack) > 0 {
-						stack[0] *= -1
+						switch ev.Rune() {
+						case 'i':
+							stack[0] *= -1
+
+						case 't':
+							stack[0] = math.Sqrt(stack[0])
+						}
 
 						sc.Clear()
 						setStackContent(stack, w, h)
