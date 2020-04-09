@@ -57,7 +57,7 @@ func clearInput(l, w, h int) {
 
 func setStackContent(stack []float64, w, h int) {
 	for l, n := range stack {
-		for c, r := range []rune(reverse(fmt.Sprintf("%v", n))) {
+		for c, r := range []rune(reverse(fmt.Sprintf("%v :%v", n, l+1))) {
 			sc.SetContent(w-1-c, h-2-l, r, nil, st)
 		}
 	}
@@ -238,7 +238,7 @@ func main() {
 				case 'h':
 					for l, str := range keys {
 						for c, r := range str {
-							sc.SetContent(1+c, h-2-l, r, nil, st)
+							sc.SetContent(1+c, 1+l, r, nil, st)
 						}
 					}
 
