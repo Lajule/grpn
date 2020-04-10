@@ -5,6 +5,7 @@ import (
 	"math"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/gdamore/tcell"
 )
@@ -13,24 +14,6 @@ var (
 	sc tcell.Screen
 
 	st tcell.Style
-
-	keys = []string{
-		"    +: Add",
-		"    -: Sub",
-		"    *: Mul",
-		"    /: Div",
-		"    p: Pow",
-		"    i: +/-",
-		"    t: Sqrt",
-		"    d: Drop",
-		"    u: Dup",
-		"    s: Swap",
-		"    r: Rot",
-		"    h: help",
-		"Enter: Enter",
-		"Suppr: Sup",
-		"    q: Quit",
-	}
 )
 
 func reverse(s string) string {
@@ -49,17 +32,27 @@ func setInputContent(input []rune, w, h int) {
 	}
 }
 
-func clearInput(l, w, h int) {
-	for c := 0; c < l; c++ {
-		sc.SetContent(w-1-c, h-1, 0, nil, st)
-	}
-}
-
 func setStackContent(stack []float64, w, h int) {
 	for l, n := range stack {
 		for c, r := range []rune(reverse(fmt.Sprintf("%v :%v", n, l+1))) {
 			sc.SetContent(w-1-c, h-2-l, r, nil, st)
 		}
+	}
+}
+
+func setKeysContent(keys []string, w, h int) {
+	s := len(keys)
+
+	for l, str := range keys {
+		for c, r := range str {
+			sc.SetContent(1+c, h-1-s+l, r, nil, st)
+		}
+	}
+}
+
+func clearInput(l, w, h int) {
+	for c := 0; c < l; c++ {
+		sc.SetContent(w-1-c, h-1, 0, nil, st)
 	}
 }
 
@@ -91,6 +84,24 @@ func main() {
 	stack := []float64{}
 
 	input := []rune{}
+
+	keys := []string{
+		"    +: ADD",
+		"    -: SUB",
+		"    *: MUL",
+		"    /: DIV",
+		"    p: POW",
+		"    i: +/-",
+		"    t: SQRT",
+		"    d: DROP",
+		"    u: DUP",
+		"    s: SWAP",
+		"    r: ROT",
+		"    h: HELP",
+		"Enter: Enter",
+		"Suppr: SUP",
+		"    q: Quit",
+	}
 
 	for {
 		w, h := sc.Size()
@@ -236,13 +247,15 @@ func main() {
 					}
 
 				case 'h':
-					for l, str := range keys {
-						for c, r := range str {
-							sc.SetContent(1+c, 1+l, r, nil, st)
-						}
-					}
-
+					setKeysContent(keys, w, h)
 					sc.Show()
+
+					time.AfterFunc(10*time.Second, func() {
+						sc.Clear()
+						setStackContent(stack, w, h)
+						setInputContent(input, w, h)
+						sc.Show()
+					})
 
 				case 'q':
 					sc.Fini()
