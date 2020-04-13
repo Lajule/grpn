@@ -1,11 +1,11 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"math"
 	"os"
 	"strconv"
-	"time"
 
 	"github.com/gdamore/tcell"
 )
@@ -14,6 +14,12 @@ var (
 	sc tcell.Screen
 
 	st tcell.Style
+
+	stack []float64
+
+	input []rune
+
+	keys []string
 )
 
 func reverse(s string) string {
@@ -26,39 +32,39 @@ func reverse(s string) string {
 	return string(runes)
 }
 
-func setInputContent(input []rune, w, h int) {
+func draw(help bool) {
+	w, h := sc.Size()
+
+	sc.Clear()
+
+	sc.SetContent(0, h-1, ':', nil, st)
+
 	for c, r := range input {
-		sc.SetContent(w-1-c, h-1, r, nil, st)
+		sc.SetContent(1+c, h-1, r, nil, st)
 	}
-}
 
-func setStackContent(stack []float64, w, h int) {
+	sc.ShowCursor(1+len(input), h-1)
+
 	for l, n := range stack {
-		for c, r := range []rune(reverse(fmt.Sprintf("%v :%v", n, l+1))) {
-			sc.SetContent(w-1-c, h-2-l, r, nil, st)
+		for c, r := range []rune(fmt.Sprintf("%v: %v", l+1, n)) {
+			sc.SetContent(c, h-2-l, r, nil, st)
 		}
 	}
-}
 
-func setKeysContent(keys []string, w, h int) {
-	s := len(keys)
+	if help {
+		s := len(keys)
 
-	for l, str := range keys {
-		for c, r := range str {
-			sc.SetContent(1+c, h-1-s+l, r, nil, st)
+		for l, str := range keys {
+			for c, r := range reverse(str) {
+				sc.SetContent(w-1-c, h-1-s+l, r, nil, st)
+			}
 		}
 	}
+
+	sc.Show()
 }
 
-func clearInput(l, w, h int) {
-	for c := 0; c < l; c++ {
-		sc.SetContent(w-1-c, h-1, 0, nil, st)
-	}
-}
-
-func init() {
-	tcell.SetEncodingFallback(tcell.EncodingFallbackASCII)
-
+func screen() {
 	var err error
 
 	sc, err = tcell.NewScreen()
@@ -75,37 +81,56 @@ func init() {
 		os.Exit(1)
 	}
 
-	st = tcell.StyleDefault
+	_, h := sc.Size()
 
 	sc.Clear()
+
+	sc.SetContent(0, h-1, ':', nil, st)
+
+	sc.ShowCursor(1, h-1)
+
+	sc.Show()
+}
+
+func init() {
+	flag.Usage = func() {
+		fmt.Printf("Usage: %s\nPress [h] for help\n", os.Args[0])
+		flag.PrintDefaults()
+	}
+
+	tcell.SetEncodingFallback(tcell.EncodingFallbackASCII)
+
+	st = tcell.StyleDefault
+
+	stack = []float64{}
+
+	input = []rune{}
+
+	keys = []string{
+		"ADD :[+]",
+		"SUB :[-]",
+		"MUL :[*]",
+		"DIV :[/]",
+		"POW :[p]",
+		"+/- :[i]",
+		"SQRT :[t]",
+		"DROP :[d]",
+		"DUP :[u]",
+		"SWAP :[s]",
+		"ROT :[r]",
+		"HELP :[h]",
+		"QUIT :[q]",
+	}
 }
 
 func main() {
-	stack := []float64{}
+	flag.Parse()
 
-	input := []rune{}
+	help := false
 
-	keys := []string{
-		"    +: ADD",
-		"    -: SUB",
-		"    *: MUL",
-		"    /: DIV",
-		"    p: POW",
-		"    i: +/-",
-		"    t: SQRT",
-		"    d: DROP",
-		"    u: DUP",
-		"    s: SWAP",
-		"    r: ROT",
-		"    h: HELP",
-		"Enter: Enter",
-		"Suppr: SUP",
-		"    q: Quit",
-	}
+	screen()
 
 	for {
-		w, h := sc.Size()
-
 		ev := sc.PollEvent()
 
 		switch ev := ev.(type) {
@@ -114,14 +139,11 @@ func main() {
 			case tcell.KeyRune:
 				switch ev.Rune() {
 				case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.':
-					input = append([]rune{ev.Rune()}, input...)
-
-					setInputContent(input, w, h)
-					sc.Show()
+					input = append(input, ev.Rune())
 
 				case '+', '-', '*', '/', 'p':
 					if len(input) > 0 && len(stack) > 0 {
-						if n, err := strconv.ParseFloat(reverse(string(input)), 32); err == nil {
+						if n, err := strconv.ParseFloat(string(input), 32); err == nil {
 							switch ev.Rune() {
 							case '+':
 								stack[0] += n
@@ -140,10 +162,6 @@ func main() {
 							}
 
 							input = input[:0]
-
-							sc.Clear()
-							setStackContent(stack, w, h)
-							sc.Show()
 						}
 					} else if len(stack) > 1 {
 						rhs, lhs := stack[0], stack[1]
@@ -165,37 +183,23 @@ func main() {
 						case 'p':
 							stack = append([]float64{math.Pow(lhs, rhs)}, stack...)
 						}
-
-						sc.Clear()
-						setStackContent(stack, w, h)
-						sc.Show()
 					}
 
 				case 'i', 't':
 					if len(input) > 0 {
 						switch ev.Rune() {
 						case 'i':
-							if input[len(input)-1] == '-' {
-								input = input[:len(input)-1]
-
-								sc.SetContent(w-len(input)-1, h-1, 0, nil, st)
+							if input[0] == '-' {
+								input = input[1:]
 							} else {
-								input = append(input, '-')
-
-								sc.SetContent(w-len(input), h-1, '-', nil, st)
+								input = append([]rune{'-'}, input...)
 							}
 
 						case 't':
-							if n, err := strconv.ParseFloat(reverse(string(input)), 32); err == nil {
-								clearInput(len(input), w, h)
-
-								input = []rune(reverse(fmt.Sprintf("%v", math.Sqrt(n))))
-
-								setInputContent(input, w, h)
+							if n, err := strconv.ParseFloat(string(input), 32); err == nil {
+								input = []rune(fmt.Sprintf("%v", math.Sqrt(n)))
 							}
 						}
-
-						sc.Show()
 					} else if len(stack) > 0 {
 						switch ev.Rune() {
 						case 'i':
@@ -204,11 +208,6 @@ func main() {
 						case 't':
 							stack[0] = math.Sqrt(stack[0])
 						}
-
-						sc.Clear()
-						setStackContent(stack, w, h)
-						setInputContent(input, w, h)
-						sc.Show()
 					}
 
 				case 'd', 'u':
@@ -220,11 +219,6 @@ func main() {
 						case 'u':
 							stack = append([]float64{stack[0]}, stack...)
 						}
-
-						sc.Clear()
-						setStackContent(stack, w, h)
-						setInputContent(input, w, h)
-						sc.Show()
 					}
 
 				case 's', 'r':
@@ -239,23 +233,10 @@ func main() {
 							tmp := stack[0]
 							stack = append(stack[1:len(stack)], tmp)
 						}
-
-						sc.Clear()
-						setStackContent(stack, w, h)
-						setInputContent(input, w, h)
-						sc.Show()
 					}
 
 				case 'h':
-					setKeysContent(keys, w, h)
-					sc.Show()
-
-					time.AfterFunc(10*time.Second, func() {
-						sc.Clear()
-						setStackContent(stack, w, h)
-						setInputContent(input, w, h)
-						sc.Show()
-					})
+					help = !help
 
 				case 'q':
 					sc.Fini()
@@ -263,26 +244,17 @@ func main() {
 					os.Exit(0)
 				}
 
-			case tcell.KeyDelete:
+			case tcell.KeyBackspace, tcell.KeyBackspace2:
 				if len(input) > 0 {
-					sc.SetContent(w-len(input), h-1, 0, nil, st)
-
-					input = input[1:]
-
-					setInputContent(input, w, h)
-					sc.Show()
+					input = input[:len(input)-1]
 				}
 
 			case tcell.KeyEnter:
 				if len(input) > 0 {
-					if n, err := strconv.ParseFloat(reverse(string(input)), 32); err == nil {
+					if n, err := strconv.ParseFloat(string(input), 32); err == nil {
 						stack = append([]float64{n}, stack...)
 
 						input = input[:0]
-
-						sc.Clear()
-						setStackContent(stack, w, h)
-						sc.Show()
 					}
 				}
 
@@ -291,8 +263,12 @@ func main() {
 
 			}
 
+			draw(help)
+
 		case *tcell.EventResize:
 			sc.Sync()
+
+			draw(help)
 		}
 	}
 }
