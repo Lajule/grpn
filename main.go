@@ -18,8 +18,6 @@ var (
 	stack []float64
 
 	input []rune
-
-	keys []string
 )
 
 func draw(help bool) {
@@ -42,6 +40,22 @@ func draw(help bool) {
 	}
 
 	if help {
+		keys := []string{
+			"ADD :[+]",
+			"SUB :[-]",
+			"MUL :[*]",
+			"DIV :[/]",
+			"POW :[p]",
+			"+/- :[i]",
+			"SQRT :[t]",
+			"DROP :[d]",
+			"DUP :[u]",
+			"SWAP :[s]",
+			"ROT :[r]",
+			"HELP :[h]",
+			"QUIT :[q]",
+		}
+
 		for l, str := range keys {
 			for c, r := range str {
 				sc.SetContent(w-1-len(str)+c, h-1-len(keys)+l, r, nil, st)
@@ -93,22 +107,6 @@ func init() {
 	stack = []float64{}
 
 	input = []rune{}
-
-	keys = []string{
-		"ADD :[+]",
-		"SUB :[-]",
-		"MUL :[*]",
-		"DIV :[/]",
-		"POW :[p]",
-		"+/- :[i]",
-		"SQRT :[t]",
-		"DROP :[d]",
-		"DUP :[u]",
-		"SWAP :[s]",
-		"ROT :[r]",
-		"HELP :[h]",
-		"QUIT :[q]",
-	}
 }
 
 func main() {
