@@ -42,11 +42,9 @@ func draw(help bool) {
 	}
 
 	if help {
-		s := len(keys)
-
 		for l, str := range keys {
 			for c, r := range str {
-				sc.SetContent(w-1-len(str)+c, h-1-s+l, r, nil, st)
+				sc.SetContent(w-1-len(str)+c, h-1-len(keys)+l, r, nil, st)
 			}
 		}
 	}
@@ -250,7 +248,6 @@ func main() {
 
 			case tcell.KeyCtrlL:
 				sc.Sync()
-
 			}
 
 			draw(help)
