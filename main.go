@@ -11,14 +11,33 @@ import (
 )
 
 var (
-	sc tcell.Screen
-
-	st tcell.Style
-
+	sc    tcell.Screen
+	st    tcell.Style
 	stack []float64
-
 	input []rune
 )
+
+func screen() {
+	tcell.SetEncodingFallback(tcell.EncodingFallbackASCII)
+
+	var err error
+
+	sc, err = tcell.NewScreen()
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", err)
+		os.Exit(1)
+	}
+
+	if err = sc.Init(); err != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", err)
+		os.Exit(1)
+	}
+
+	st = tcell.StyleDefault
+	stack = []float64{}
+	input = []rune{}
+}
 
 func draw(help bool) {
 	w, h := sc.Size()
@@ -45,13 +64,13 @@ func draw(help bool) {
 			"SUB :[-]",
 			"MUL :[*]",
 			"DIV :[/]",
-			"POW :[p]",
 			"+/- :[i]",
+			"DUP :[u]",
+			"ROT :[r]",
+			"POW :[p]",
 			"SQRT :[t]",
 			"DROP :[d]",
-			"DUP :[u]",
 			"SWAP :[s]",
-			"ROT :[r]",
 			"HELP :[h]",
 			"QUIT :[q]",
 		}
@@ -66,55 +85,19 @@ func draw(help bool) {
 	sc.Show()
 }
 
-func screen() {
-	var err error
-
-	sc, err = tcell.NewScreen()
-
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", err)
-
-		os.Exit(1)
-	}
-
-	if err = sc.Init(); err != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", err)
-
-		os.Exit(1)
-	}
-
-	_, h := sc.Size()
-
-	sc.Clear()
-
-	sc.SetContent(0, h-1, ':', nil, st)
-
-	sc.ShowCursor(1, h-1)
-
-	sc.Show()
-}
-
 func init() {
 	flag.Usage = func() {
 		fmt.Printf("Usage: %s\nPress [h] for help\n", os.Args[0])
 		flag.PrintDefaults()
 	}
-
-	tcell.SetEncodingFallback(tcell.EncodingFallbackASCII)
-
-	st = tcell.StyleDefault
-
-	stack = []float64{}
-
-	input = []rune{}
 }
 
 func main() {
 	flag.Parse()
 
-	help := false
-
 	screen()
+
+	help := false
 
 	for {
 		ev := sc.PollEvent()
@@ -226,7 +209,6 @@ func main() {
 
 				case 'q':
 					sc.Fini()
-
 					os.Exit(0)
 				}
 
@@ -239,7 +221,6 @@ func main() {
 				if len(input) > 0 {
 					if n, err := strconv.ParseFloat(string(input), 32); err == nil {
 						stack = append([]float64{n}, stack...)
-
 						input = input[:0]
 					}
 				}
@@ -252,7 +233,6 @@ func main() {
 
 		case *tcell.EventResize:
 			sc.Sync()
-
 			draw(help)
 		}
 	}
