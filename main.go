@@ -22,16 +22,6 @@ var (
 	keys []string
 )
 
-func reverse(s string) string {
-	runes := []rune{}
-
-	for _, r := range s {
-		runes = append([]rune{r}, runes...)
-	}
-
-	return string(runes)
-}
-
 func draw(help bool) {
 	w, h := sc.Size()
 
@@ -55,8 +45,8 @@ func draw(help bool) {
 		s := len(keys)
 
 		for l, str := range keys {
-			for c, r := range reverse(str) {
-				sc.SetContent(w-1-c, h-1-s+l, r, nil, st)
+			for c, r := range str {
+				sc.SetContent(w-1-len(str)+c, h-1-s+l, r, nil, st)
 			}
 		}
 	}
