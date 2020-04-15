@@ -10,9 +10,10 @@ import (
 	"github.com/gdamore/tcell"
 )
 
+const Help = "[i]:+/- [p]:POW [r]:ROT [t]:SQRT [d]:DROP [s]:SWAP [u]:DUP [q]:QUIT"
+
 var (
 	sc    tcell.Screen
-	st    tcell.Style
 	stack []float64
 	input []rune
 )
@@ -34,51 +35,34 @@ func screen() {
 		os.Exit(1)
 	}
 
-	st = tcell.StyleDefault
 	stack = []float64{}
 	input = []rune{}
 }
 
-func draw(help bool) {
+func draw() {
 	w, h := sc.Size()
+	style := tcell.StyleDefault
+	reverse := style.Reverse(true)
 
 	sc.Clear()
 
-	sc.SetContent(0, h-1, ':', nil, st)
+	sc.SetContent(0, h-1, ':', nil, style)
 
 	for c, r := range input {
-		sc.SetContent(1+c, h-1, r, nil, st)
+		sc.SetContent(1+c, h-1, r, nil, style)
 	}
 
 	sc.ShowCursor(1+len(input), h-1)
 
-	for l, n := range stack {
-		for c, r := range []rune(fmt.Sprintf("%v: %v", l+1, n)) {
-			sc.SetContent(c, h-2-l, r, nil, st)
-		}
+	help := fmt.Sprintf("%-*v", w, Help)
+
+	for c, r := range help {
+		sc.SetContent(c, h-2, r, nil, reverse)
 	}
 
-	if help {
-		keys := []string{
-			"ADD :[+]",
-			"SUB :[-]",
-			"MUL :[*]",
-			"DIV :[/]",
-			"+/- :[i]",
-			"DUP :[u]",
-			"ROT :[r]",
-			"POW :[p]",
-			"SQRT :[t]",
-			"DROP :[d]",
-			"SWAP :[s]",
-			"HELP :[h]",
-			"QUIT :[q]",
-		}
-
-		for l, str := range keys {
-			for c, r := range str {
-				sc.SetContent(w-1-len(str)+c, h-1-len(keys)+l, r, nil, st)
-			}
+	for l, n := range stack {
+		for c, r := range []rune(fmt.Sprintf("%v: %v", l+1, n)) {
+			sc.SetContent(c, h-3-l, r, nil, style)
 		}
 	}
 
@@ -87,7 +71,7 @@ func draw(help bool) {
 
 func init() {
 	flag.Usage = func() {
-		fmt.Printf("Usage: %s\nPress [h] for help\n", os.Args[0])
+		fmt.Printf("Usage: %s\n", os.Args[0])
 		flag.PrintDefaults()
 	}
 }
@@ -96,8 +80,6 @@ func main() {
 	flag.Parse()
 
 	screen()
-
-	help := false
 
 	for {
 		ev := sc.PollEvent()
@@ -204,9 +186,6 @@ func main() {
 						}
 					}
 
-				case 'h':
-					help = !help
-
 				case 'q':
 					sc.Fini()
 					os.Exit(0)
@@ -229,11 +208,11 @@ func main() {
 				sc.Sync()
 			}
 
-			draw(help)
+			draw()
 
 		case *tcell.EventResize:
 			sc.Sync()
-			draw(help)
+			draw()
 		}
 	}
 }
