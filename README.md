@@ -1,6 +1,6 @@
 # grpn
 
-A reverse polish notation calculator
+A reverse Polish notation calculator
 
 ![grpn](https://github.com/Lajule/grpn/blob/master/grpn.png)
 
