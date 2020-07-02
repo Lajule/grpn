@@ -43,10 +43,11 @@ func draw() {
 	w, h := sc.Size()
 	style := tcell.StyleDefault
 	reverse := style.Reverse(true)
+	green := style.Foreground(tcell.ColorGreen).Bold(true)
 
 	sc.Clear()
 
-	sc.SetContent(0, h-1, ':', nil, style)
+	sc.SetContent(0, h-1, ':', nil, green)
 
 	for c, r := range input {
 		sc.SetContent(1+c, h-1, r, nil, style)
@@ -61,8 +62,16 @@ func draw() {
 	}
 
 	for l, n := range stack {
-		for c, r := range []rune(fmt.Sprintf("%v: %v", l+1, n)) {
+		c:= 0
+
+		for _, r := range []rune(fmt.Sprintf("%v:", l+1)) {
+			sc.SetContent(c, h-3-l, r, nil, green)
+			c += 1
+		}
+
+		for _, r := range []rune(fmt.Sprintf("%v", n)) {
 			sc.SetContent(c, h-3-l, r, nil, style)
+			c += 1
 		}
 	}
 
