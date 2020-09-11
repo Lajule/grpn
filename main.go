@@ -10,7 +10,7 @@ import (
 	"github.com/gdamore/tcell"
 )
 
-const Help = "[i]:+/- [p]:POW [r]:ROT [t]:SQRT [d]:DROP [s]:SWAP [u]:DUP [q]:QUIT"
+const help = "[i]:+/- [p]:POW [r]:ROT [t]:SQRT [d]:DROP [s]:SWAP [u]:DUP [q]:QUIT"
 
 var (
 	sc    tcell.Screen
@@ -55,7 +55,7 @@ func draw() {
 
 	sc.ShowCursor(1+len(input), h-1)
 
-	help := fmt.Sprintf("%-*v", w, Help)
+	help := fmt.Sprintf("%-*v", w, help)
 
 	for c, r := range help {
 		sc.SetContent(c, h-2, r, nil, reverse)
@@ -66,12 +66,12 @@ func draw() {
 
 		for _, r := range []rune(fmt.Sprintf("%v:", l+1)) {
 			sc.SetContent(c, h-3-l, r, nil, green)
-			c += 1
+			c++
 		}
 
 		for _, r := range []rune(fmt.Sprintf("%v", n)) {
 			sc.SetContent(c, h-3-l, r, nil, style)
-			c += 1
+			c++
 		}
 	}
 
