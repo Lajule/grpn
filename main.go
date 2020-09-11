@@ -62,7 +62,7 @@ func draw() {
 	}
 
 	for l, n := range stack {
-		c:= 0
+		c := 0
 
 		for _, r := range []rune(fmt.Sprintf("%v:", l+1)) {
 			sc.SetContent(c, h-3-l, r, nil, green)
