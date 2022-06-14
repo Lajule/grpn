@@ -20,7 +20,5 @@ Key | Command
 ## Build
 
 ```sh
-mkdir _build
-cd _build
-../make.sh
+go build
 ```
